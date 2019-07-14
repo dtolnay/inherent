@@ -1,8 +1,13 @@
 [package]
 name = "inherent"
-version = "0.0.0"
+version = "0.0.0" # remember to update number in readme for major versions
 authors = ["David Tolnay <dtolnay@gmail.com>"]
 edition = "2018"
+license = "MIT OR Apache-2.0"
+description = "Make trait methods callable without the trait in scope"
+repository = "https://github.com/dtolnay/inherent"
+documentation = "https://docs.rs/inherent"
+readme = "README.md"
 
 [lib]
 proc-macro = true
