@@ -1,0 +1,5 @@
+error: must be placed on a trait impl
+ --> $DIR/not-trait-impl.rs:5:1
+  |
+5 | #[inherent]
+  | ^^^^^^^^^^^
