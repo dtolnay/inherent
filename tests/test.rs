@@ -15,5 +15,6 @@ mod types {
 
 #[test]
 fn test() {
+    // types::Trait is not in scope.
     types::Struct.f::<str>();
 }
