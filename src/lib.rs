@@ -47,6 +47,16 @@
 //! would be:
 //!
 //! ```rust
+//! # trait Trait {
+//! #     fn f(self);
+//! # }
+//! #
+//! # pub struct Struct;
+//! #
+//! # impl Trait for Struct {
+//! #     fn f(self) {}
+//! # }
+//! #
 //! impl Struct {
 //!     pub fn f(self) {
 //!         <Self as Trait>::f(self)
@@ -63,13 +73,25 @@
 //! invocation.
 //!
 //! ```rust
+//! # use inherent::inherent;
+//! #
+//! # trait Trait {}
+//! #
+//! # struct A;
 //! #[inherent]  // private inherent methods are the default
+//! # impl Trait for A {}
 //!
+//! # struct B;
 //! #[inherent(pub)]  // all methods pub
+//! # impl Trait for B {}
 //!
+//! # struct C;
 //! #[inherent(crate)]  // all methods pub(crate)
+//! # impl Trait for C {}
 //!
+//! # struct D;
 //! #[inherent(in path::to)]  // all methods pub(in path::to)
+//! # impl Trait for D {}
 //! ```
 
 extern crate proc_macro;
