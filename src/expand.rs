@@ -22,25 +22,28 @@ pub fn inherent(vis: Visibility, input: TraitImpl) -> TokenStream {
         let unsafety = &method.sig.unsafety;
         let abi = &method.sig.abi;
         let ident = &method.sig.ident;
-        let generics = &method.sig.decl.generics;
-        let output = &method.sig.decl.output;
-        let where_clause = &method.sig.decl.generics.where_clause;
+        let generics = &method.sig.generics;
+        let output = &method.sig.output;
+        let where_clause = &method.sig.generics.where_clause;
 
         let (arg_pat, arg_val): (Vec<_>, Vec<_>) = method
             .sig
-            .decl
             .inputs
             .iter()
             .enumerate()
             .map(|(i, input)| match input {
-                FnArg::SelfRef(arg) => (quote!(#arg), quote!(self)),
-                FnArg::SelfValue(_) => (quote!(self), quote!(self)),
-                FnArg::Captured(arg) => {
+                FnArg::Receiver(receiver) => {
+                    if receiver.reference.is_some() {
+                        (quote!(#receiver), quote!(self))
+                    } else {
+                        (quote!(self), quote!(self))
+                    }
+                }
+                FnArg::Typed(arg) => {
                     let var = Ident::new(&format!("__arg{}", i), Span::call_site());
                     let ty = &arg.ty;
                     (quote!(#var: #ty), quote!(#var))
                 }
-                FnArg::Inferred(_) | FnArg::Ignored(_) => unimplemented!(),
             })
             .unzip();
 
