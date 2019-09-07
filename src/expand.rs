@@ -1,16 +1,39 @@
+use std::mem;
+
+use crate::default_methods::DefaultBody;
 use crate::parse::TraitImpl;
 use crate::visibility::Visibility;
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::{FnArg, Ident, ImplItem};
 
-pub fn inherent(vis: Visibility, input: TraitImpl) -> TokenStream {
+pub fn inherent(vis: Visibility, mut input: TraitImpl) -> TokenStream {
     let generics = &input.generics;
     let where_clause = &input.generics.where_clause;
     let trait_ = &input.trait_;
     let ty = &input.self_ty;
 
-    let fwd_methods = input.items.iter().filter_map(|item| {
+    // Remove the default! section from the output
+    let (pass_through, defaults) = mem::replace(&mut input.items, Vec::new())
+        .into_iter()
+        .partition(|item| match item {
+            ImplItem::Macro(mac) if mac.mac.path.is_ident("default") => false,
+            _ => true,
+        });
+    input.items = pass_through;
+
+    // Convert the default! section(s) into fake method impls so it is properly generated. This
+    // adds empty bodies to them, but it doesn't matter because we don't use them.
+    let fake_methods = defaults
+        .into_iter()
+        .flat_map(|mac| if let ImplItem::Macro(mac) = mac {
+            mac.mac.parse_body::<DefaultBody>().unwrap().0
+        } else {
+            unreachable!();
+        })
+        .collect::<Vec<_>>();
+
+    let fwd_methods = fake_methods.iter().chain(&input.items).filter_map(|item| {
         let method = match item {
             ImplItem::Method(method) => method,
             _ => return None,

@@ -21,6 +21,7 @@ mod types {
 
     trait Trait {
         fn f(self);
+        fn g(&self) {}
     }
 
     pub struct Struct;
@@ -28,12 +29,21 @@ mod types {
     #[inherent(pub)]
     impl Trait for Struct {
         fn f(self) {}
+
+        default! {
+            // The proc-macro doesn't know about the default methods, so we need
+            // to supply their signatures this way if we don't want to
+            // override them.
+            fn g(&self);
+        }
     }
 }
 
 fn main() {
+    let s = types::Struct;
     // types::Trait is not in scope, but method can be called.
-    types::Struct.f();
+    s.g();
+    s.f();
 }
 ```
 
@@ -41,14 +51,27 @@ Without the `inherent` macro on the trait impl, this would have failed with the
 following error:
 
 ```console
-error[E0599]: no method named `f` found for type `types::Struct` in the current scope
-  --> src/main.rs:18:19
+error[E0599]: no method named `g` found for type `types::Struct` in the current scope
+  --> tests/test.rs:27:7
    |
-8  |     pub struct Struct;
+10 |     pub struct Struct;
+   |     ------------------ method `g` not found for this
+...
+27 |     s.g();
+   |       ^
+   |
+   = help: items from traits can only be used if the trait is implemented and in scope
+   = note: the following trait defines an item `g`, perhaps you need to implement it:
+           candidate #1: `types::Trait`
+
+error[E0599]: no method named `f` found for type `types::Struct` in the current scope
+  --> tests/test.rs:28:7
+   |
+10 |     pub struct Struct;
    |     ------------------ method `f` not found for this
 ...
-18 |     types::Struct.f();
-   |                   ^
+28 |     s.f::<str>();
+   |       ^
    |
    = help: items from traits can only be used if the trait is implemented and in scope
    = note: the following trait defines an item `f`, perhaps you need to implement it:
@@ -61,6 +84,9 @@ would be:
 
 ```rust
 impl Struct {
+    pub fn g(&self) {
+        <Self as Trait>::g(self)
+    }
     pub fn f(self) {
         <Self as Trait>::f(self)
     }
