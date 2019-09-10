@@ -1,5 +1,3 @@
-use std::mem;
-
 use crate::default_methods::DefaultBody;
 use crate::parse::TraitImpl;
 use crate::visibility::Visibility;
@@ -13,25 +11,26 @@ pub fn inherent(vis: Visibility, mut input: TraitImpl) -> TokenStream {
     let trait_ = &input.trait_;
     let ty = &input.self_ty;
 
-    // Remove the default! section from the output
-    let (pass_through, defaults) = mem::replace(&mut input.items, Vec::new())
-        .into_iter()
-        .partition(|item| match item {
-            ImplItem::Macro(mac) if mac.mac.path.is_ident("default") => false,
-            _ => true,
-        });
-    input.items = pass_through;
+    // Normal methods or other items we just pass through (and maybe generate inherent methods for)
+    let mut pass_through = Vec::new();
+    // List of all errors we discover when processing
+    let mut errors = Vec::new();
+    // We convert the default! methods into list of fake methods with empty bodies. These are
+    // removed (together with all the default! macro invocations) from the output.
+    let mut fake_methods = Vec::new();
 
-    // Convert the default! section(s) into fake method impls so it is properly generated. This
-    // adds empty bodies to them, but it doesn't matter because we don't use them.
-    let fake_methods = defaults
-        .into_iter()
-        .flat_map(|mac| if let ImplItem::Macro(mac) = mac {
-            mac.mac.parse_body::<DefaultBody>().unwrap().0
-        } else {
-            unreachable!();
-        })
-        .collect::<Vec<_>>();
+    for item in input.items {
+        match item {
+            ImplItem::Macro(ref mac) if mac.mac.path.is_ident("default") => {
+                match mac.mac.parse_body::<DefaultBody>() {
+                    Ok(body) => fake_methods.extend(body.0),
+                    Err(e) => errors.push(e.to_compile_error()),
+                }
+            }
+            _ => pass_through.push(item),
+        }
+    }
+    input.items = pass_through;
 
     let fwd_methods = fake_methods.iter().chain(&input.items).filter_map(|item| {
         let method = match item {
@@ -83,6 +82,8 @@ pub fn inherent(vis: Visibility, mut input: TraitImpl) -> TokenStream {
     });
 
     quote! {
+        #(#errors)*
+
         impl #generics #ty #where_clause {
             #(#fwd_methods)*
         }
