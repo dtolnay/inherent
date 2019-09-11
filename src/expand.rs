@@ -21,8 +21,8 @@ pub fn inherent(vis: Visibility, mut input: TraitImpl) -> TokenStream {
 
     for item in input.items {
         match item {
-            ImplItem::Macro(ref mac) if mac.mac.path.is_ident("default") => {
-                match mac.mac.parse_body_with(default_methods::parse) {
+            ImplItem::Macro(ref item) if item.mac.path.is_ident("default") => {
+                match item.mac.parse_body_with(default_methods::parse) {
                     Ok(body) => fake_methods.extend(body),
                     Err(e) => errors.push(e.to_compile_error()),
                 }
