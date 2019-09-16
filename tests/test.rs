@@ -3,6 +3,8 @@ mod types {
 
     trait Trait {
         fn f<T: ?Sized>(self);
+        // A default method
+        fn g(&self) {}
     }
 
     pub struct Struct;
@@ -10,11 +12,16 @@ mod types {
     #[inherent(pub)]
     impl Trait for Struct {
         fn f<T: ?Sized>(self) {}
+        default! {
+            fn g(&self);
+        }
     }
 }
 
 #[test]
 fn test() {
     // types::Trait is not in scope.
-    types::Struct.f::<str>();
+    let s = types::Struct;
+    s.g();
+    s.f::<str>();
 }
