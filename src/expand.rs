@@ -3,7 +3,7 @@ use crate::parse::TraitImpl;
 use crate::visibility::Visibility;
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
-use syn::{Attribute, FnArg, Ident, ImplItem, Path, Signature};
+use syn::{Attribute, FnArg, Ident, ImplItem, Signature};
 
 pub fn inherent(vis: Visibility, mut input: TraitImpl) -> TokenStream {
     let generics = &input.generics;
@@ -11,18 +11,59 @@ pub fn inherent(vis: Visibility, mut input: TraitImpl) -> TokenStream {
     let trait_ = &input.trait_;
     let ty = &input.self_ty;
 
-    let mut errors = Vec::new();
+    let fwd_method = |attrs: &[Attribute], sig: &Signature| {
+        let constness = &sig.constness;
+        let asyncness = &sig.asyncness;
+        let unsafety = &sig.unsafety;
+        let abi = &sig.abi;
+        let ident = &sig.ident;
+        let generics = &sig.generics;
+        let output = &sig.output;
+        let where_clause = &sig.generics.where_clause;
 
+        let (arg_pat, arg_val): (Vec<_>, Vec<_>) = sig
+            .inputs
+            .iter()
+            .enumerate()
+            .map(|(i, input)| match input {
+                FnArg::Receiver(receiver) => {
+                    if receiver.reference.is_some() {
+                        (quote!(#receiver), quote!(self))
+                    } else {
+                        (quote!(self), quote!(self))
+                    }
+                }
+                FnArg::Typed(arg) => {
+                    let var = Ident::new(&format!("__arg{}", i), Span::call_site());
+                    let ty = &arg.ty;
+                    (quote!(#var: #ty), quote!(#var))
+                }
+            })
+            .unzip();
+
+        let types = generics.type_params().map(|param| &param.ident);
+
+        quote! {
+            #(#attrs)*
+            #vis #constness #asyncness #unsafety #abi fn #ident #generics (
+                #(#arg_pat,)*
+            ) #output #where_clause {
+                <Self as #trait_>::#ident::<#(#types,)*>(#(#arg_val,)*)
+            }
+        }
+    };
+
+    let mut errors = Vec::new();
     let fwd_methods: Vec<_> = input
         .items
         .iter()
         .flat_map(|item| match item {
-            ImplItem::Method(method) => vec![fwd_method(&method.attrs, &vis, &method.sig, trait_)],
+            ImplItem::Method(method) => vec![fwd_method(&method.attrs, &method.sig)],
             ImplItem::Macro(item) if item.mac.path.is_ident("default") => {
                 match item.mac.parse_body_with(default_methods::parse) {
                     Ok(body) => body
                         .into_iter()
-                        .map(|item| fwd_method(&item.attrs, &vis, &item.sig, trait_))
+                        .map(|item| fwd_method(&item.attrs, &item.sig))
                         .collect(),
                     Err(e) => {
                         errors.push(e.to_compile_error());
@@ -47,52 +88,5 @@ pub fn inherent(vis: Visibility, mut input: TraitImpl) -> TokenStream {
         }
 
         #input
-    }
-}
-
-fn fwd_method(
-    attrs: &[Attribute],
-    vis: &Visibility,
-    sig: &Signature,
-    trait_: &Path,
-) -> TokenStream {
-    let constness = &sig.constness;
-    let asyncness = &sig.asyncness;
-    let unsafety = &sig.unsafety;
-    let abi = &sig.abi;
-    let ident = &sig.ident;
-    let generics = &sig.generics;
-    let output = &sig.output;
-    let where_clause = &sig.generics.where_clause;
-
-    let (arg_pat, arg_val): (Vec<_>, Vec<_>) = sig
-        .inputs
-        .iter()
-        .enumerate()
-        .map(|(i, input)| match input {
-            FnArg::Receiver(receiver) => {
-                if receiver.reference.is_some() {
-                    (quote!(#receiver), quote!(self))
-                } else {
-                    (quote!(self), quote!(self))
-                }
-            }
-            FnArg::Typed(arg) => {
-                let var = Ident::new(&format!("__arg{}", i), Span::call_site());
-                let ty = &arg.ty;
-                (quote!(#var: #ty), quote!(#var))
-            }
-        })
-        .unzip();
-
-    let types = generics.type_params().map(|param| &param.ident);
-
-    quote! {
-        #(#attrs)*
-        #vis #constness #asyncness #unsafety #abi fn #ident #generics (
-            #(#arg_pat,)*
-        ) #output #where_clause {
-            <Self as #trait_>::#ident::<#(#types,)*>(#(#arg_val,)*)
-        }
     }
 }
