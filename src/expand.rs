@@ -3,7 +3,8 @@ use crate::parse::TraitImpl;
 use crate::visibility::Visibility;
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
-use syn::{FnArg, Ident, ImplItem};
+use syn::token::Brace;
+use syn::{Block, FnArg, Ident, ImplItem, ImplItemMethod};
 
 pub fn inherent(vis: Visibility, mut input: TraitImpl) -> TokenStream {
     let generics = &input.generics;
@@ -23,7 +24,18 @@ pub fn inherent(vis: Visibility, mut input: TraitImpl) -> TokenStream {
         match item {
             ImplItem::Macro(ref item) if item.mac.path.is_ident("default") => {
                 match item.mac.parse_body_with(default_methods::parse) {
-                    Ok(body) => fake_methods.extend(body),
+                    Ok(body) => fake_methods.extend(body.into_iter().map(|item| {
+                        ImplItem::Method(ImplItemMethod {
+                            attrs: item.attrs,
+                            vis: syn::Visibility::Inherited,
+                            defaultness: None,
+                            sig: item.sig,
+                            block: Block {
+                                brace_token: Brace::default(),
+                                stmts: Vec::new(),
+                            },
+                        })
+                    })),
                     Err(e) => errors.push(e.to_compile_error()),
                 }
             }

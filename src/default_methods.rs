@@ -1,8 +1,7 @@
 use syn::parse::{Error, ParseStream, Result};
-use syn::token::Brace;
-use syn::{Block, ImplItem, ImplItemMethod, TraitItemMethod};
+use syn::TraitItemMethod;
 
-pub fn parse(input: ParseStream) -> Result<Vec<ImplItem>> {
+pub fn parse(input: ParseStream) -> Result<Vec<TraitItemMethod>> {
     let mut items = Vec::new();
     let mut error = None;
     while !input.is_empty() {
@@ -14,16 +13,7 @@ pub fn parse(input: ParseStream) -> Result<Vec<ImplItem>> {
                 Some(e) => e.combine(new_err),
             }
         } else {
-            items.push(ImplItem::Method(ImplItemMethod {
-                attrs: item.attrs,
-                vis: syn::Visibility::Inherited,
-                defaultness: None,
-                sig: item.sig,
-                block: Block {
-                    brace_token: Brace::default(),
-                    stmts: Vec::new(),
-                },
-            }));
+            items.push(item);
         }
     }
     match error {
