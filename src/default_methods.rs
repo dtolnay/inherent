@@ -1,6 +1,6 @@
-use syn::{Block, ImplItem, ImplItemMethod, TraitItemMethod};
 use syn::parse::{Error, ParseStream, Result};
 use syn::token::Brace;
+use syn::{Block, ImplItem, ImplItemMethod, TraitItemMethod};
 
 pub fn parse(input: ParseStream) -> Result<Vec<ImplItem>> {
     let mut items = Vec::new();
