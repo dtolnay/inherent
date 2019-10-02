@@ -5,14 +5,6 @@ use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::{Attribute, FnArg, Ident, ImplItem, Signature};
 
-fn is_doc(attr: &Attribute) -> bool {
-    (|| -> Option<bool> {
-        let meta = attr.parse_meta().ok()?;
-        let ident = meta.path().get_ident()?;
-        Some(ident == "doc")
-    })().unwrap_or(false)
-}
-
 pub fn inherent(vis: Visibility, mut input: TraitImpl) -> TokenStream {
     let generics = &input.generics;
     let where_clause = &input.generics.where_clause;
@@ -51,12 +43,12 @@ pub fn inherent(vis: Visibility, mut input: TraitImpl) -> TokenStream {
 
         let types = generics.type_params().map(|param| &param.ident);
 
-        let has_doc = attrs.iter().any(is_doc);
+        let has_doc = attrs.iter().any(|attr| attr.path.is_ident("doc"));
         let default_doc = if has_doc {
-            quote!()
+            None
         } else {
             let msg = format!("See [{}::{}]", quote!(#trait_), ident);
-            quote!(#[doc = #msg])
+            Some(quote!(#[doc = #msg]))
         };
 
         quote! {
