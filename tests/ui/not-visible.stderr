@@ -1,7 +1,5 @@
-error[E0624]: method `f` is private
+error[E0624]: associated function `f` is private
   --> $DIR/not-visible.rs:17:5
    |
 17 |     types::Struct::f();
    |     ^^^^^^^^^^^^^^^^
-
-For more information about this error, try `rustc --explain E0624`.
