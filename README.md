@@ -1,7 +1,7 @@
 \#\[inherent\]
 ==============
 
-[![Build Status](https://api.travis-ci.com/dtolnay/inherent.svg?branch=master)](https://travis-ci.com/dtolnay/inherent)
+[![Build Status](https://img.shields.io/github/workflow/status/dtolnay/inherent/CI/master)](https://github.com/dtolnay/inherent/actions?query=branch%3Amaster)
 [![Latest Version](https://img.shields.io/crates/v/inherent.svg)](https://crates.io/crates/inherent)
 [![Rust Documentation](https://img.shields.io/badge/api-rustdoc-blue.svg)](https://docs.rs/inherent)
 
