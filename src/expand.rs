@@ -47,7 +47,8 @@ pub fn inherent(vis: Visibility, mut input: TraitImpl) -> TokenStream {
         let default_doc = if has_doc {
             None
         } else {
-            let msg = format!("See [`{}::{}`]", quote!(#trait_), ident);
+            let trai = quote!(#trait_).to_string().replace(" ", "");
+            let msg = format!("See [`{}::{}`]", trai, ident);
             Some(quote!(#[doc = #msg]))
         };
 
