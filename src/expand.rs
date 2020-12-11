@@ -47,8 +47,12 @@ pub fn inherent(vis: Visibility, mut input: TraitImpl) -> TokenStream {
         let default_doc = if has_doc {
             None
         } else {
-            let trai = quote!(#trait_).to_string().replace(" ", "");
-            let msg = format!("See [`{}::{}`]", trai, ident);
+            let mut link = String::new();
+            for segment in &trait_.segments {
+                link += &segment.ident.to_string();
+                link += "::";
+            }
+            let msg = format!("See [`{}{}`]", link, ident);
             Some(quote!(#[doc = #msg]))
         };
 
