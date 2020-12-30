@@ -102,6 +102,8 @@
 //! # impl Trait for D {}
 //! ```
 
+#![allow(clippy::match_like_matches_macro, clippy::needless_doctest_main)]
+
 extern crate proc_macro;
 
 mod default_methods;
