@@ -104,7 +104,6 @@
 
 #![allow(
     clippy::default_trait_access,
-    clippy::match_like_matches_macro,
     clippy::needless_doctest_main,
     clippy::needless_pass_by_value
 )]
