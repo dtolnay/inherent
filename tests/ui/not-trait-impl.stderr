@@ -4,4 +4,4 @@ error: must be placed on a trait impl
 5 | #[inherent]
   | ^^^^^^^^^^^
   |
-  = note: this error originates in an attribute macro (in Nightly builds, run with -Z macro-backtrace for more info)
+  = note: this error originates in the attribute macro `inherent` (in Nightly builds, run with -Z macro-backtrace for more info)
