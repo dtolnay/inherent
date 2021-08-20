@@ -110,7 +110,6 @@
 
 extern crate proc_macro;
 
-mod default_methods;
 mod expand;
 mod parse;
 mod visibility;
