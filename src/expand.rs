@@ -59,22 +59,25 @@ fn fwd_method(trait_: &Path, method: &ImplItemMethod) -> TokenStream {
     let (arg_pat, arg_val): (Vec<_>, Vec<_>) = method
         .sig
         .inputs
-        .iter()
+        .pairs()
         .enumerate()
-        .map(|(i, input)| match input {
-            FnArg::Receiver(receiver) => {
-                let self_token = receiver.self_token;
-                if receiver.reference.is_some() {
-                    (quote!(#receiver), quote!(#self_token))
-                } else {
-                    (quote!(#self_token), quote!(#self_token))
+        .map(|(i, pair)| {
+            let (input, comma_token) = pair.into_tuple();
+            match input {
+                FnArg::Receiver(receiver) => {
+                    let self_token = receiver.self_token;
+                    if receiver.reference.is_some() {
+                        (quote!(#receiver #comma_token), quote!(#self_token))
+                    } else {
+                        (quote!(#self_token #comma_token), quote!(#self_token))
+                    }
                 }
-            }
-            FnArg::Typed(arg) => {
-                let var = Ident::new(&format!("__arg{}", i), Span::call_site());
-                let colon_token = arg.colon_token;
-                let ty = &arg.ty;
-                (quote!(#var #colon_token #ty), quote!(#var))
+                FnArg::Typed(arg) => {
+                    let var = Ident::new(&format!("__arg{}", i), Span::call_site());
+                    let colon_token = arg.colon_token;
+                    let ty = &arg.ty;
+                    (quote!(#var #colon_token #ty #comma_token), quote!(#var))
+                }
             }
         })
         .unzip();
@@ -82,7 +85,7 @@ fn fwd_method(trait_: &Path, method: &ImplItemMethod) -> TokenStream {
     let types = generics.type_params().map(|param| &param.ident);
     let body = quote!(<Self as #trait_>::#ident::<#(#types,)*>(#(#arg_val,)*));
     let block = quote_spanned!(method.block.brace_token.span=> { #body });
-    let args = quote_spanned!(method.sig.paren_token.span=> (#(#arg_pat,)*));
+    let args = quote_spanned!(method.sig.paren_token.span=> (#(#arg_pat)*));
 
     let has_doc = attrs.iter().any(|attr| attr.path.is_ident("doc"));
     let default_doc = if has_doc {
