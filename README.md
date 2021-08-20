@@ -11,7 +11,7 @@ the trait in scope.
 
 ```toml
 [dependencies]
-inherent = "0.1"
+inherent = "1.0"
 ```
 
 ## Example
