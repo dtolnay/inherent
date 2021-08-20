@@ -63,10 +63,11 @@ fn fwd_method(trait_: &Path, method: &ImplItemMethod) -> TokenStream {
         .enumerate()
         .map(|(i, input)| match input {
             FnArg::Receiver(receiver) => {
+                let self_token = receiver.self_token;
                 if receiver.reference.is_some() {
-                    (quote!(#receiver), quote!(self))
+                    (quote!(#receiver), quote!(#self_token))
                 } else {
-                    (quote!(self), quote!(self))
+                    (quote!(#self_token), quote!(#self_token))
                 }
             }
             FnArg::Typed(arg) => {
