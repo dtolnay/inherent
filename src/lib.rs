@@ -20,9 +20,9 @@
 //!
 //!     pub struct Struct;
 //!
-//!     #[inherent(pub)]
+//!     #[inherent]
 //!     impl Trait for Struct {
-//!         fn f(self) {}
+//!         pub fn f(self) {}
 //!     }
 //! }
 //!
@@ -71,36 +71,6 @@
 //!     }
 //! }
 //! ```
-//!
-//! # Visibility
-//!
-//! Ordinary trait methods have the same visibility as the trait or the `Self` type,
-//! whichever's is smaller. Neither of these visibilities is knowable to the
-//! `inherent` macro, so we simply emit all inherent methods as private by default.
-//! A different visibility may be specified explicitly in the `inherent` macro
-//! invocation.
-//!
-//! ```rust
-//! # use inherent::inherent;
-//! #
-//! # trait Trait {}
-//! #
-//! # struct A;
-//! #[inherent]  // private inherent methods are the default
-//! # impl Trait for A {}
-//!
-//! # struct B;
-//! #[inherent(pub)]  // all methods pub
-//! # impl Trait for B {}
-//!
-//! # struct C;
-//! #[inherent(crate)]  // all methods pub(crate)
-//! # impl Trait for C {}
-//!
-//! # struct D;
-//! #[inherent(in path::to)]  // all methods pub(in path::to)
-//! # impl Trait for D {}
-//! ```
 
 #![allow(
     clippy::default_trait_access,
@@ -112,17 +82,16 @@ extern crate proc_macro;
 
 mod expand;
 mod parse;
-mod visibility;
 
 use proc_macro::TokenStream;
+use syn::parse::Nothing;
 use syn::parse_macro_input;
 
 use crate::parse::TraitImpl;
-use crate::visibility::Visibility;
 
 #[proc_macro_attribute]
 pub fn inherent(args: TokenStream, input: TokenStream) -> TokenStream {
-    let vis = parse_macro_input!(args as Visibility);
+    parse_macro_input!(args as Nothing);
     let input = parse_macro_input!(input as TraitImpl);
-    expand::inherent(vis, input).into()
+    expand::inherent(input).into()
 }
