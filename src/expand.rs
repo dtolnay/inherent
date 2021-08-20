@@ -1,9 +1,8 @@
-use crate::default_methods;
 use crate::parse::TraitImpl;
 use crate::visibility::Visibility;
-use proc_macro2::{Span, TokenStream};
+use proc_macro2::{Span, TokenStream, TokenTree};
 use quote::quote;
-use syn::{Attribute, FnArg, Ident, ImplItem, Signature};
+use syn::{Attribute, FnArg, Ident, ImplItem, ImplItemMethod, Item, Signature, Stmt};
 
 pub fn inherent(vis: Visibility, mut input: TraitImpl) -> TokenStream {
     let generics = &input.generics;
@@ -67,40 +66,41 @@ pub fn inherent(vis: Visibility, mut input: TraitImpl) -> TokenStream {
         }
     };
 
-    let mut errors = Vec::new();
     let fwd_methods: Vec<_> = input
         .items
         .iter()
         .flat_map(|item| match item {
-            ImplItem::Method(method) => vec![fwd_method(&method.attrs, &method.sig)],
-            ImplItem::Macro(item) if item.mac.path.is_ident("default") => {
-                match item.mac.parse_body_with(default_methods::parse) {
-                    Ok(body) => body
-                        .into_iter()
-                        .map(|item| fwd_method(&item.attrs, &item.sig))
-                        .collect(),
-                    Err(e) => {
-                        errors.push(e.to_compile_error());
-                        Vec::new()
-                    }
-                }
-            }
-            _ => Vec::new(),
+            ImplItem::Method(method) => Some(fwd_method(&method.attrs, &method.sig)),
+            _ => None,
         })
         .collect();
 
     input.items.retain(|item| match item {
-        ImplItem::Macro(item) if item.mac.path.is_ident("default") => false,
+        ImplItem::Method(method) => !inherit_default_implementation(method),
         _ => true,
     });
 
     quote! {
-        #(#errors)*
-
         impl #generics #ty #where_clause {
             #(#fwd_methods)*
         }
 
         #input
     }
+}
+
+fn inherit_default_implementation(method: &ImplItemMethod) -> bool {
+    method.block.stmts.len() == 1
+        && match &method.block.stmts[0] {
+            Stmt::Item(Item::Verbatim(verbatim)) => {
+                let mut iter = verbatim.clone().into_iter();
+                match iter.next() {
+                    Some(TokenTree::Punct(punct)) => {
+                        punct.as_char() == ';' && iter.next().is_none()
+                    }
+                    _ => false,
+                }
+            }
+            _ => false,
+        }
 }
