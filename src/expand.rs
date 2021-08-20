@@ -1,26 +1,28 @@
 use crate::parse::TraitImpl;
-use crate::visibility::Visibility;
 use proc_macro2::{Span, TokenStream, TokenTree};
 use quote::quote;
-use syn::{Attribute, FnArg, Ident, ImplItem, ImplItemMethod, Item, Signature, Stmt};
+use syn::{FnArg, Ident, ImplItem, ImplItemMethod, Item, Stmt, Visibility};
 
-pub fn inherent(vis: Visibility, mut input: TraitImpl) -> TokenStream {
+pub fn inherent(mut input: TraitImpl) -> TokenStream {
     let generics = &input.generics;
     let where_clause = &input.generics.where_clause;
     let trait_ = &input.trait_;
     let ty = &input.self_ty;
 
-    let fwd_method = |attrs: &[Attribute], sig: &Signature| {
-        let constness = &sig.constness;
-        let asyncness = &sig.asyncness;
-        let unsafety = &sig.unsafety;
-        let abi = &sig.abi;
-        let ident = &sig.ident;
-        let generics = &sig.generics;
-        let output = &sig.output;
-        let where_clause = &sig.generics.where_clause;
+    let fwd_method = |method: &ImplItemMethod| {
+        let attrs = &method.attrs;
+        let vis = &method.vis;
+        let constness = &method.sig.constness;
+        let asyncness = &method.sig.asyncness;
+        let unsafety = &method.sig.unsafety;
+        let abi = &method.sig.abi;
+        let ident = &method.sig.ident;
+        let generics = &method.sig.generics;
+        let output = &method.sig.output;
+        let where_clause = &method.sig.generics.where_clause;
 
-        let (arg_pat, arg_val): (Vec<_>, Vec<_>) = sig
+        let (arg_pat, arg_val): (Vec<_>, Vec<_>) = method
+            .sig
             .inputs
             .iter()
             .enumerate()
@@ -70,15 +72,26 @@ pub fn inherent(vis: Visibility, mut input: TraitImpl) -> TokenStream {
         .items
         .iter()
         .filter_map(|item| match item {
-            ImplItem::Method(method) => Some(fwd_method(&method.attrs, &method.sig)),
+            ImplItem::Method(method) => Some(fwd_method(method)),
             _ => None,
         })
         .collect();
 
-    input.items.retain(|item| match item {
-        ImplItem::Method(method) => !inherit_default_implementation(method),
-        _ => true,
-    });
+    input.items = input
+        .items
+        .into_iter()
+        .filter_map(|item| match item {
+            ImplItem::Method(mut method) => {
+                if inherit_default_implementation(&method) {
+                    None
+                } else {
+                    method.vis = Visibility::Inherited;
+                    Some(ImplItem::Method(method))
+                }
+            }
+            item => Some(item),
+        })
+        .collect();
 
     quote! {
         impl #generics #ty #where_clause {

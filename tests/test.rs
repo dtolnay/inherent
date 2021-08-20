@@ -9,10 +9,11 @@ mod types {
 
     pub struct Struct;
 
-    #[inherent(pub)]
+    #[inherent]
     impl Trait for Struct {
-        fn f<T: ?Sized>(self) {}
-        fn g(&self);
+        pub fn f<T: ?Sized>(self) {}
+        #[rustfmt::skip] // https://github.com/rust-lang/rustfmt/issues/4960
+        pub fn g(&self);
     }
 }
 
