@@ -69,7 +69,7 @@ pub fn inherent(vis: Visibility, mut input: TraitImpl) -> TokenStream {
     let fwd_methods: Vec<_> = input
         .items
         .iter()
-        .flat_map(|item| match item {
+        .filter_map(|item| match item {
             ImplItem::Method(method) => Some(fwd_method(&method.attrs, &method.sig)),
             _ => None,
         })
