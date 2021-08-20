@@ -1,6 +1,6 @@
 use crate::parse::TraitImpl;
 use proc_macro2::{Span, TokenStream, TokenTree};
-use quote::quote;
+use quote::{quote, quote_spanned};
 use syn::{FnArg, Ident, ImplItem, ImplItemMethod, Item, Path, Stmt, Visibility};
 
 pub fn inherent(mut input: TraitImpl) -> TokenStream {
@@ -50,6 +50,7 @@ fn fwd_method(trait_: &Path, method: &ImplItemMethod) -> TokenStream {
     let asyncness = &method.sig.asyncness;
     let unsafety = &method.sig.unsafety;
     let abi = &method.sig.abi;
+    let fn_token = method.sig.fn_token;
     let ident = &method.sig.ident;
     let generics = &method.sig.generics;
     let output = &method.sig.output;
@@ -77,6 +78,9 @@ fn fwd_method(trait_: &Path, method: &ImplItemMethod) -> TokenStream {
         .unzip();
 
     let types = generics.type_params().map(|param| &param.ident);
+    let body = quote!(<Self as #trait_>::#ident::<#(#types,)*>(#(#arg_val,)*));
+    let block = quote_spanned!(method.block.brace_token.span=> { #body });
+    let args = quote_spanned!(method.sig.paren_token.span=> (#(#arg_pat,)*));
 
     let has_doc = attrs.iter().any(|attr| attr.path.is_ident("doc"));
     let default_doc = if has_doc {
@@ -94,11 +98,7 @@ fn fwd_method(trait_: &Path, method: &ImplItemMethod) -> TokenStream {
     quote! {
         #(#attrs)*
         #default_doc
-        #vis #constness #asyncness #unsafety #abi fn #ident #generics (
-            #(#arg_pat,)*
-        ) #output #where_clause {
-            <Self as #trait_>::#ident::<#(#types,)*>(#(#arg_val,)*)
-        }
+        #vis #constness #asyncness #unsafety #abi #fn_token #ident #generics #args #output #where_clause #block
     }
 }
 
