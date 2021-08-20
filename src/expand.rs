@@ -1,7 +1,7 @@
 use crate::parse::TraitImpl;
 use proc_macro2::{Span, TokenStream, TokenTree};
 use quote::{quote, quote_spanned};
-use syn::{FnArg, Ident, ImplItem, ImplItemMethod, Item, Path, Stmt, Visibility};
+use syn::{FnArg, Ident, ImplItem, ImplItemMethod, Item, Pat, Path, Stmt, Visibility};
 
 pub fn inherent(mut input: TraitImpl) -> TokenStream {
     let generics = &input.generics;
@@ -73,7 +73,10 @@ fn fwd_method(trait_: &Path, method: &ImplItemMethod) -> TokenStream {
                     }
                 }
                 FnArg::Typed(arg) => {
-                    let var = Ident::new(&format!("__arg{}", i), Span::call_site());
+                    let var = match arg.pat.as_ref() {
+                        Pat::Ident(pat) => pat.ident.clone(),
+                        _ => Ident::new(&format!("__arg{}", i), Span::call_site()),
+                    };
                     let colon_token = arg.colon_token;
                     let ty = &arg.ty;
                     (quote!(#var #colon_token #ty #comma_token), quote!(#var))
