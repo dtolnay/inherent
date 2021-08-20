@@ -72,8 +72,9 @@ fn fwd_method(trait_: &Path, method: &ImplItemMethod) -> TokenStream {
             }
             FnArg::Typed(arg) => {
                 let var = Ident::new(&format!("__arg{}", i), Span::call_site());
+                let colon_token = arg.colon_token;
                 let ty = &arg.ty;
-                (quote!(#var: #ty), quote!(#var))
+                (quote!(#var #colon_token #ty), quote!(#var))
             }
         })
         .unzip();
