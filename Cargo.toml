@@ -3,6 +3,7 @@ name = "inherent"
 version = "1.0.0" # remember to update number in readme for major versions
 authors = ["David Tolnay <dtolnay@gmail.com>"]
 edition = "2018"
+rust-version = "1.31"
 license = "MIT OR Apache-2.0"
 description = "Make trait methods callable without the trait in scope"
 repository = "https://github.com/dtolnay/inherent"
