@@ -1,5 +1,5 @@
 error[E0118]: no nominal type found for inherent implementation
- --> $DIR/blanket-impl.rs:8:15
+ --> $DIR/tests/ui/blanket-impl.rs:8:15
   |
 8 | impl<T> A for T {
   |               ^ impl requires a nominal type
