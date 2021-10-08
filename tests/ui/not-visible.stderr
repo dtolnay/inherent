@@ -1,5 +1,5 @@
 error[E0624]: associated function `f` is private
-  --> $DIR/tests/ui/not-visible.rs:17:20
+  --> tests/ui/not-visible.rs:17:20
    |
 12 |         fn f() {}
    |         ------ private associated function defined here

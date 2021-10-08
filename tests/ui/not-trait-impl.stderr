@@ -1,5 +1,5 @@
 error: must be placed on a trait impl
- --> $DIR/tests/ui/not-trait-impl.rs:5:1
+ --> tests/ui/not-trait-impl.rs:5:1
   |
 5 | #[inherent]
   | ^^^^^^^^^^^
