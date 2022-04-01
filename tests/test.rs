@@ -12,7 +12,6 @@ mod types {
     #[inherent]
     impl Trait for Struct {
         pub fn f<T: ?Sized>(self) {}
-        #[rustfmt::skip] // https://github.com/rust-lang/rustfmt/issues/4960
         pub fn g(&self);
     }
 }
