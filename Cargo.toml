@@ -2,13 +2,13 @@
 name = "inherent"
 version = "1.0.1" # remember to update number in readme for major versions
 authors = ["David Tolnay <dtolnay@gmail.com>"]
-edition = "2018"
-rust-version = "1.31"
-license = "MIT OR Apache-2.0"
 description = "Make trait methods callable without the trait in scope"
-repository = "https://github.com/dtolnay/inherent"
 documentation = "https://docs.rs/inherent"
+edition = "2018"
+license = "MIT OR Apache-2.0"
 readme = "README.md"
+repository = "https://github.com/dtolnay/inherent"
+rust-version = "1.31"
 
 [lib]
 proc-macro = true
