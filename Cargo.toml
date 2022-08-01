@@ -2,6 +2,7 @@
 name = "inherent"
 version = "1.0.1" # remember to update number in readme for major versions
 authors = ["David Tolnay <dtolnay@gmail.com>"]
+categories = ["rust-patterns", "no-std"]
 description = "Make trait methods callable without the trait in scope"
 documentation = "https://docs.rs/inherent"
 edition = "2018"
