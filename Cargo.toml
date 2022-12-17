@@ -1,6 +1,6 @@
 [package]
 name = "inherent"
-version = "1.0.2"
+version = "1.0.3"
 authors = ["David Tolnay <dtolnay@gmail.com>"]
 categories = ["rust-patterns", "no-std"]
 description = "Make trait methods callable without the trait in scope"
