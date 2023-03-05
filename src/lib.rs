@@ -72,7 +72,7 @@
 //! }
 //! ```
 
-#![doc(html_root_url = "https://docs.rs/inherent/1.0.4")]
+#![doc(html_root_url = "https://docs.rs/inherent/1.0.5")]
 #![allow(
     clippy::default_trait_access,
     clippy::needless_doctest_main,
