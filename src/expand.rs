@@ -1,7 +1,7 @@
 use crate::parse::TraitImpl;
 use proc_macro2::{Span, TokenStream, TokenTree};
 use quote::{quote, quote_spanned};
-use syn::{FnArg, Ident, ImplItem, ImplItemMethod, Item, Pat, Path, Stmt, Visibility};
+use syn::{FnArg, Ident, ImplItem, ImplItemFn, Item, Pat, Path, Stmt, Visibility};
 
 pub fn inherent(mut input: TraitImpl) -> TokenStream {
     let impl_token = &input.impl_token;
@@ -14,7 +14,7 @@ pub fn inherent(mut input: TraitImpl) -> TokenStream {
         .items
         .iter()
         .filter_map(|item| match item {
-            ImplItem::Method(method) => Some(fwd_method(trait_, method)),
+            ImplItem::Fn(method) => Some(fwd_method(trait_, method)),
             _ => None,
         })
         .collect();
@@ -23,12 +23,12 @@ pub fn inherent(mut input: TraitImpl) -> TokenStream {
         .items
         .into_iter()
         .filter_map(|item| match item {
-            ImplItem::Method(mut method) => {
+            ImplItem::Fn(mut method) => {
                 if inherit_default_implementation(&method) {
                     None
                 } else {
                     method.vis = Visibility::Inherited;
-                    Some(ImplItem::Method(method))
+                    Some(ImplItem::Fn(method))
                 }
             }
             item => Some(item),
@@ -44,7 +44,7 @@ pub fn inherent(mut input: TraitImpl) -> TokenStream {
     }
 }
 
-fn fwd_method(trait_: &Path, method: &ImplItemMethod) -> TokenStream {
+fn fwd_method(trait_: &Path, method: &ImplItemFn) -> TokenStream {
     let attrs = &method.attrs;
     let vis = &method.vis;
     let constness = &method.sig.constness;
@@ -91,7 +91,7 @@ fn fwd_method(trait_: &Path, method: &ImplItemMethod) -> TokenStream {
     let block = quote_spanned!(method.block.brace_token.span=> { #body });
     let args = quote_spanned!(method.sig.paren_token.span=> (#(#arg_pat)*));
 
-    let has_doc = attrs.iter().any(|attr| attr.path.is_ident("doc"));
+    let has_doc = attrs.iter().any(|attr| attr.path().is_ident("doc"));
     let default_doc = if has_doc {
         None
     } else {
@@ -111,7 +111,7 @@ fn fwd_method(trait_: &Path, method: &ImplItemMethod) -> TokenStream {
     }
 }
 
-fn inherit_default_implementation(method: &ImplItemMethod) -> bool {
+fn inherit_default_implementation(method: &ImplItemFn) -> bool {
     method.block.stmts.len() == 1
         && match &method.block.stmts[0] {
             Stmt::Item(Item::Verbatim(verbatim)) => {
