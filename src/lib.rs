@@ -84,6 +84,7 @@ extern crate proc_macro;
 
 mod expand;
 mod parse;
+mod verbatim;
 
 use proc_macro::TokenStream;
 use syn::parse::Nothing;
