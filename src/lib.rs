@@ -77,7 +77,8 @@
     clippy::default_trait_access,
     clippy::module_name_repetitions,
     clippy::needless_doctest_main,
-    clippy::needless_pass_by_value
+    clippy::needless_pass_by_value,
+    clippy::uninlined_format_args
 )]
 
 extern crate proc_macro;
