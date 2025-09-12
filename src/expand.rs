@@ -113,7 +113,8 @@ fn fwd_method(
         .unzip();
 
     let types = generics.type_params().map(|param| &param.ident);
-    let body = quote!(<Self as #trait_>::#ident::<#(#types,)*>(#(#arg_val,)*));
+    let wait = asyncness.map(|_| quote!(.await));
+    let body = quote!(<Self as #trait_>::#ident::<#(#types,)*>(#(#arg_val,)*) #wait);
     let block = quote_spanned!(body_span=> { #body });
     let args = quote_spanned!(sig.paren_token.span=> (#(#arg_pat)*));
 
