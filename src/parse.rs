@@ -22,14 +22,11 @@ impl Parse for TraitImpl {
     fn parse(input: ParseStream) -> Result<Self> {
         let imp: ItemImpl = input.parse()?;
 
-        let (trait_, for_token) = match imp.trait_ {
-            Some((_bang_token, trait_, for_token)) => (trait_, for_token),
-            None => {
-                return Err(Error::new(
-                    Span::call_site(),
-                    "must be placed on a trait impl",
-                ))
-            }
+        let Some((_bang_token, trait_, for_token)) = imp.trait_ else {
+            return Err(Error::new(
+                Span::call_site(),
+                "must be placed on a trait impl",
+            ));
         };
 
         Ok(TraitImpl {
