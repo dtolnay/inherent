@@ -2,7 +2,7 @@ use crate::parse::TraitImpl;
 use crate::verbatim::VerbatimFn;
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, quote_spanned};
-use syn::{Attribute, FnArg, Ident, ImplItem, Pat, Path, Signature, Visibility};
+use syn::{Attribute, FnArg, Ident, ImplItem, Pat, Path, ReceiverKind, Signature, Visibility};
 
 pub fn inherent(mut input: TraitImpl) -> TokenStream {
     let impl_token = &input.impl_token;
@@ -76,7 +76,7 @@ fn fwd_method(
 ) -> TokenStream {
     let constness = &sig.constness;
     let asyncness = &sig.asyncness;
-    let unsafety = &sig.unsafety;
+    let safety = &sig.safety;
     let abi = &sig.abi;
     let fn_token = sig.fn_token;
     let ident = &sig.ident;
@@ -93,7 +93,7 @@ fn fwd_method(
             match input {
                 FnArg::Receiver(receiver) => {
                     let self_token = receiver.self_token;
-                    if receiver.reference.is_some() {
+                    if let ReceiverKind::Reference(..) = &receiver.kind {
                         (quote!(#receiver #comma_token), quote!(#self_token))
                     } else {
                         (quote!(#self_token #comma_token), quote!(#self_token))
@@ -134,6 +134,6 @@ fn fwd_method(
     quote! {
         #(#attrs)*
         #default_doc
-        #vis #constness #asyncness #unsafety #abi #fn_token #ident #generics #args #output #where_clause #block
+        #vis #constness #asyncness #safety #abi #fn_token #ident #generics #args #output #where_clause #block
     }
 }
